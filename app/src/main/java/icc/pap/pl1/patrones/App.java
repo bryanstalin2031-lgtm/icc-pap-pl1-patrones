@@ -3,12 +3,81 @@
  */
 package icc.pap.pl1.patrones;
 
-public class App {
-    public String getGreeting() {
-        return "Hello World!";
-    }
+import icc.pap.pl1.patrones.modelo.Pedido;
+import icc.pap.pl1.patrones.servicio.ServicioPedidos;
 
+public class App {
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+        ServicioPedidos servicio = new ServicioPedidos();
+
+        System.out.println("--- PRUEBAS DE CASOS DE ACEPTACIÓN ---\n");
+
+        // CA01 y CA02: Clonar Café dos veces y verificar que son instancias distintas
+        System.out.println("CA01 y CA02:");
+        Pedido cafe1 = servicio.crearPedido("CAFÉ");
+        Pedido cafe2 = servicio.crearPedido("CAFÉ");
+        System.out.println("Pedido 1: " + cafe1.idProducto() + " | " + cafe1.descripcion() + " | $" + cafe1.precio());
+        System.out.println("Pedido 2: " + cafe2.idProducto() + " | " + cafe2.descripcion() + " | $" + cafe2.precio());
+        System.out.println("¿Son referencias distintas en memoria? " + (cafe1 != cafe2) + "\n");
+
+        // CA03: Al primer Café agregar Azúcar y Crema (Total esperado: $3.90)[cite: 16]
+        System.out.println("CA03:");
+        try {
+            cafe1 = servicio.personalizarPedido(cafe1, "Azúcar");
+            cafe1 = servicio.personalizarPedido(cafe1, "Crema");
+            System.out.println("Café 1 actualizado: " + cafe1.descripcion() + " | Total: $" + cafe1.precio() + "\n");
+        } catch (Exception e) {
+            System.out.println(e.getMessage() + "\n");
+        }
+
+        // CA04: Consultar el segundo Café sin ingredientes (Mantiene $2.20)[cite: 16]
+        System.out.println("CA04:");
+        System.out.println("Café 2 sin cambios: " + cafe2.descripcion() + " | Total: $" + cafe2.precio() + "\n");
+
+        // CA05: Clonar Ensalada y agregar Tomate y Pollo (Total esperado: $5.60)[cite: 16]
+        System.out.println("CA05:");
+        Pedido ensalada = servicio.crearPedido("ENSALADA");
+        try {
+            ensalada = servicio.personalizarPedido(ensalada, "Tomate");
+            ensalada = servicio.personalizarPedido(ensalada, "Pollo");
+            System.out.println("Pedido: " + ensalada.descripcion() + " | Total: $" + ensalada.precio() + "\n");
+        } catch (Exception e) {}
+
+        // CA06: Clonar Pizza y agregar Queso y Pepperoni (Total esperado: $7.10)[cite: 16]
+        System.out.println("CA06:");
+        Pedido pizza = servicio.crearPedido("PIZZA");
+        try {
+            pizza = servicio.personalizarPedido(pizza, "Queso");
+            pizza = servicio.personalizarPedido(pizza, "Pepperoni");
+            System.out.println("Pedido: " + pizza.descripcion() + " | Total: $" + pizza.precio() + "\n");
+        } catch (Exception e) {}
+
+        // CA07: Intentar agregar Queso a Café (Operación rechazada)[cite: 16]
+        System.out.println("CA07:");
+        try {
+            cafe1 = servicio.personalizarPedido(cafe1, "Queso");
+        } catch (Exception e) {
+            System.out.println("Fallo controlado: " + e.getMessage());
+            System.out.println("Café 1 se mantiene en: $" + cafe1.precio() + "\n");
+        }
+
+        // CA09: Solicitar clon de clave inexistente (Fallo controlado)[cite: 16]
+        System.out.println("CA09:");
+        Pedido invalido = servicio.crearPedido("HAMBURGUESA");
+        System.out.println("Pedido inexistente creado como: " + invalido + "\n");
+
+        // CA10: Agregar dos veces Azúcar a un Café (Total esperado: $3.20)[cite: 16]
+        System.out.println("CA10:");
+        Pedido cafe3 = servicio.crearPedido("CAFÉ");
+        try {
+            cafe3 = servicio.personalizarPedido(cafe3, "Azúcar");
+            cafe3 = servicio.personalizarPedido(cafe3, "Azúcar");
+            System.out.println("Café doble azúcar: " + cafe3.descripcion() + " | Total: $" + cafe3.precio() + "\n");
+        } catch (Exception e) {}
+        
+        // CA11: Reiniciar y volver a clonar Café (Parte del valor base)[cite: 16]
+        System.out.println("CA11:");
+        Pedido cafe4 = servicio.crearPedido("CAFÉ");
+        System.out.println("Nuevo pedido tras reiniciar: " + cafe4.idProducto() + " | " + cafe4.descripcion() + " | Total: $" + cafe4.precio() + "\n");
     }
 }
