@@ -1,23 +1,23 @@
-package icc.pap.pl1.patrones.modelo;
+package icc.pap.pl1.patrones.prototype;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+import icc.pap.pl1.patrones.modelo.Pedido;
+import icc.pap.pl1.patrones.modelo.TipoProducto;
+
 public class RegistroPrototipos {
-    private final Map<String, Pedido> prototipos = new HashMap<>();
+    private final Map<TipoProducto, ProductoBase> prototipos = new HashMap<>();
 
     public RegistroPrototipos() {
-        prototipos.put("CAF", new ProductoBase("PROTOTIPOCAFE", "Café", "Café", new BigDecimal("2.20")));
-        prototipos.put("ENSALADA",
-                new ProductoBase("PROTOTIPOENSALA", "Ensalada sencilla", "Ensalada sencilla", new BigDecimal("3.00")));
-        prototipos.put("PIZZA",
-                new ProductoBase("PROTOTIPOPIZZA", "Piza sencilla", "Pizza sencilla", new BigDecimal("5.00")));
+        prototipos.put(TipoProducto.CAFE, new Cafe("PROTOTIPO"));
+        prototipos.put(TipoProducto.ENSALADA, new Ensalada("PROTOTIPO"));
+        prototipos.put(TipoProducto.PIZZA, new Pizza("PROTOTIPO"));
 
     }
 
-    public Pedido clonar(String tipo, String nuevoId) {
-        Pedido pedidoduplicado = prototipos.get(tipo.toUpperCase());
+    public Pedido clonar(TipoProducto tipo, String nuevoId) {
+        ProductoBase pedidoduplicado = prototipos.get(tipo);
 
         if (pedidoduplicado != null) {
             return pedidoduplicado.duplicado(nuevoId);

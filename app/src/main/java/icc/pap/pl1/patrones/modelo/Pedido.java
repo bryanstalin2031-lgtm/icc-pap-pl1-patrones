@@ -12,6 +12,5 @@ public interface Pedido {
 
     String tipo();
 
-    Pedido duplicado(String nuevoId);
 
 }

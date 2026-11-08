@@ -1,6 +1,8 @@
-package icc.pap.pl1.patrones.modelo;
+package icc.pap.pl1.patrones.decorator;
 
 import java.math.BigDecimal;
+
+import icc.pap.pl1.patrones.modelo.Pedido;
 
 public abstract class DecoradorIngrediente implements Pedido {
     protected Pedido pedido;
@@ -15,12 +17,6 @@ public abstract class DecoradorIngrediente implements Pedido {
             return pedido.descripcion();
         }
         return "";
-
-    }
-
-    @Override
-    public Pedido duplicado(String nuevoId) {
-        return null;
 
     }
 

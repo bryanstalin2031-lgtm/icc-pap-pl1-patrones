@@ -1,6 +1,8 @@
-package icc.pap.pl1.patrones.modelo;
+package icc.pap.pl1.patrones.decorator;
 
 import java.math.BigDecimal;
+
+import icc.pap.pl1.patrones.modelo.Pedido;
 
 public class Tomate extends DecoradorIngrediente {
 
@@ -10,7 +12,7 @@ public class Tomate extends DecoradorIngrediente {
 
     @Override
     public String descripcion() {
-        return super.descripcion() + "+ Tomate";
+        return super.descripcion() + "+ Tomate ";
     }
 
     @Override

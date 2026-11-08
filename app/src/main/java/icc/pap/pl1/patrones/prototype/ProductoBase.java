@@ -1,8 +1,10 @@
-package icc.pap.pl1.patrones.modelo;
+package icc.pap.pl1.patrones.prototype;
 
 import java.math.BigDecimal;
 
-public final class ProductoBase implements Pedido {
+import icc.pap.pl1.patrones.modelo.Pedido;
+
+public abstract class ProductoBase implements Pedido, Prototipo<ProductoBase> {
     private String idProducto;
     private String tipo;
     private String descripcion;
@@ -36,8 +38,5 @@ public final class ProductoBase implements Pedido {
     }
 
     @Override
-    public Pedido duplicado(String nuevoId) {
-        return new ProductoBase(nuevoId, this.tipo, this.descripcion, this.precio);
-    }
-
+    public abstract ProductoBase duplicado(String nuevoId); 
 }

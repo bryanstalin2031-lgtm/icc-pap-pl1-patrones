@@ -1,6 +1,8 @@
-package icc.pap.pl1.patrones.modelo;
+package icc.pap.pl1.patrones.decorator;
 
 import java.math.BigDecimal;
+
+import icc.pap.pl1.patrones.modelo.Pedido;
 
 public class Azucar extends DecoradorIngrediente {
 
@@ -10,12 +12,14 @@ public class Azucar extends DecoradorIngrediente {
 
     @Override
     public String descripcion() {
-        return super.descripcion() + " + Azúcar";
+        return super.descripcion() + " + Azúcar ";
     }
 
     @Override
     public BigDecimal precio() {
         return super.precio().add(new BigDecimal("0.50"));
     }
+
+    
 
 }
