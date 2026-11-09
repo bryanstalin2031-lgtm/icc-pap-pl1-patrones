@@ -23,9 +23,15 @@
 ## Identificación de patrones
 
 - **Prototype:** Clase `RegistroPrototipos` en donde tenemos el metodo de clonar, esta clase esta encargada de almacenar los diferentes prototipos y las configuramos para que puedan generar copias de forma independiente.
+
+![alt text](../assets/RegistroPrototipos.png)
 - **Decorator:** Clase abstracta `DecoradorIngrediente` que con sus clases concretas no permite añadir (ingredientes, descripcion y precio) a objetos de tipo `Pedido`.
+
+![alt text](../assets/DecoradorIngrediente.png)
 - **Integración:** Tenemos el metodo de PersonalizarPedido en la clase `ServivioPedidos`, encargado de fusionar las caracteristicas del Prototype y Decorator.
 
+![alt text](../assets/ServicioPedido.png)
+![alt text](../assets/SPParte2.png)
 ## Decisiones de diseño
 
 1. Tenenmos la clase RegistroPrototipos para guardar los productos base (Café, Ensalada y Pizza) y los clonamos cada vez que se necesiten objetos de esos tipos, en lugar de crear objetos nuevos con new. Esto nos ayudó a mantener los originales sin modificaciones y a asegurarnos de que cada pedido nuevo tenga una referencia independiente en memoria.
