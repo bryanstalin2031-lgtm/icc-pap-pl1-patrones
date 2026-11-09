@@ -73,7 +73,7 @@ public class App {
         cafe3 = new Azucar(new Azucar(cafe3));
         System.out.println("Café con doble azúcar: " + cafe3.descripcion() + " | Total: $" + cafe3.precio() + "\n");
 
-        System.out.println("=== CA011 ===\n");
+        System.out.println("=== CA11 ===\n");
         servicio.reiniciarPedidos();
 
         Pedido cafe4 = servicio.crearPedido(TipoProducto.CAFE);

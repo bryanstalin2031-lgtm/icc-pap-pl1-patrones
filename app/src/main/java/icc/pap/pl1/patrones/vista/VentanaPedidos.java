@@ -1,11 +1,11 @@
 package icc.pap.pl1.patrones.vista;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 import icc.pap.pl1.patrones.modelo.Pedido;
 import icc.pap.pl1.patrones.modelo.TipoProducto;
@@ -13,246 +13,203 @@ import icc.pap.pl1.patrones.prototype.RegistroPrototipos;
 import icc.pap.pl1.patrones.servicio.ServicioPedidos;
 
 public class VentanaPedidos extends JFrame {
-    private ServicioPedidos servicio;
-    private RegistroPrototipos registro = new RegistroPrototipos();
-    private int contadorPedidos = 1;
-    private Map<String, Pedido> pedidosActivos;
 
-    private JTable tablaPedidos;
-    private DefaultTableModel modeloTabla;
-    private JPanel pnlMostrarIngredientes;
-    private CardLayout cardLayout;
-    private JLabel lblDetalleId;
-    private JLabel lblDetalleTotal;
+    private static final String RUTA_IMG = "/Users/bryan/Documents/icc-pap-pl1-patrones/app/src/imagenes/";
+
+    private record Producto(TipoProducto tipo, String nombre, String precio, String imagen, String[][] ingredientes) {
+    }
+
+    private static final Producto[] PRODUCTOS = {
+            new Producto(TipoProducto.CAFE, "Café", "$2.20", "cafe.jpeg",
+                    new String[][] { { "Azúcar", "$0.50" }, { "Crema", "$1.20" } }),
+            new Producto(TipoProducto.ENSALADA, "Ensalada", "$3.00", "ensalada.jpeg",
+                    new String[][] { { "Tomate", "$1.10" }, { "Pollo", "$1.50" } }),
+            new Producto(TipoProducto.PIZZA, "Pizza", "$5.00", "pizza.jpeg",
+                    new String[][] { { "Queso", "$1.00" }, { "Pepperoni", "$1.10" } })
+    };
+
+    private final ServicioPedidos servicio = new ServicioPedidos();
+    private final RegistroPrototipos registro = new RegistroPrototipos();
+    private final Map<String, Pedido> pedidosActivos = new HashMap<>();
+    private int contadorPedidos = 1;
+
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel pnlIngredientes = new JPanel(cardLayout);
+    private final DefaultTableModel modeloTabla = new DefaultTableModel(
+            new String[] { "ID", "Producto", "Composicion", "Total" }, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
+    private final JTable tablaPedidos = new JTable(modeloTabla);
+    private final JLabel lblCantidad = new JLabel("0");
+    private final JLabel lblTotal = new JLabel("$0.00");
 
     public VentanaPedidos() {
-        this.servicio = new ServicioPedidos();
-        this.pedidosActivos = new HashMap<>();
-
         setTitle("Cafetería UPS by Bryam");
         setSize(1000, 650);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
-        JPanel pnlIzquierdo = new JPanel(new BorderLayout(5, 15));
-        pnlIzquierdo.setPreferredSize(new Dimension(300, 0));
-        pnlIzquierdo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(crearPanelIzquierdo(), BorderLayout.WEST);
+        add(crearPanelCentral(), BorderLayout.CENTER);
+    }
+
+    private JPanel crearPanelIzquierdo() {
         JPanel panelProductos = new JPanel(new GridLayout(2, 2, 10, 10));
         panelProductos.setBorder(BorderFactory.createTitledBorder("Productos disponibles"));
+        pnlIngredientes.setBorder(BorderFactory.createTitledBorder("Ingredientes compatibles"));
 
-        JButton btnCafe = crearBoton("Café", "$2.20",
-                "/Users/bryan/Documents/icc-pap-pl1-patrones/app/src/imagenes/cafe.jpeg");
-        JButton btnEnsalada = crearBoton("Ensalada", "$3.00",
-                "/Users/bryan/Documents/icc-pap-pl1-patrones/app/src/imagenes/ensalada.jpeg");
-        JButton btnPizza = crearBoton("Pizza", "$5.00",
-                "/Users/bryan/Documents/icc-pap-pl1-patrones/app/src/imagenes/pizza.jpeg");
+        for (Producto p : PRODUCTOS) {
+            JButton btn = crearBoton(p.nombre(), p.precio(), RUTA_IMG + p.imagen());
+            btn.setPreferredSize(new Dimension(110, 100));
+            btn.addActionListener(e -> agregarPedido(p.tipo()));
+            panelProductos.add(btn);
 
-        panelProductos.add(btnCafe);
-        panelProductos.add(btnEnsalada);
-        panelProductos.add(btnPizza);
+            pnlIngredientes.add(crearPanelIngredientes(p.ingredientes()), p.tipo().name());
+        }
 
         JButton btnDuplicar = new JButton("Duplicar producto seleccionado");
-
-        JPanel pnlTopIzquierda = new JPanel(new BorderLayout(0, 10));
-        pnlTopIzquierda.add(panelProductos, BorderLayout.CENTER);
-        pnlTopIzquierda.add(btnDuplicar, BorderLayout.SOUTH);
-
-        cardLayout = new CardLayout();
-        pnlMostrarIngredientes = new JPanel(cardLayout);
-        pnlMostrarIngredientes.setBorder(BorderFactory.createTitledBorder("Ingredientes compatibles"));
-
-        JPanel cartaCafe = crearPanelIngredientes(new String[] { "Azúcar", "Crema" },
-                new String[] { "$0.50", "$1.20" });
-        JPanel cartaEnsalada = crearPanelIngredientes(new String[] { "Tomate", "Pollo" },
-                new String[] { "$1.10", "$1.50" });
-        JPanel cartaPizza = crearPanelIngredientes(new String[] { "Queso", "Pepperoni" },
-                new String[] { "$1.00", "$1.10" });
-
-        pnlMostrarIngredientes.add(cartaCafe, "CAFÉ");
-        pnlMostrarIngredientes.add(cartaEnsalada, "ENSALADA");
-        pnlMostrarIngredientes.add(cartaPizza, "PIZZA");
+        btnDuplicar.addActionListener(e -> duplicarSeleccionado());
 
         JButton btnReiniciar = new JButton("Reiniciar pedidos");
+        btnReiniciar.addActionListener(e -> {
+            servicio.reiniciarPedidos();
+            pedidosActivos.clear();
+            modeloTabla.setRowCount(0);
+            actualizarPanelDetalles();
+        });
 
-        JPanel pnlBotIzquierda = new JPanel(new BorderLayout(0, 10));
+        JPanel arriba = new JPanel(new BorderLayout(0, 10));
+        arriba.add(panelProductos, BorderLayout.CENTER);
+        arriba.add(btnDuplicar, BorderLayout.SOUTH);
 
-        pnlBotIzquierda.add(pnlMostrarIngredientes, BorderLayout.CENTER);
-        pnlBotIzquierda.add(btnReiniciar, BorderLayout.SOUTH);
+        JPanel abajo = new JPanel(new BorderLayout(0, 10));
+        abajo.add(pnlIngredientes, BorderLayout.CENTER);
+        abajo.add(btnReiniciar, BorderLayout.SOUTH);
 
-        pnlIzquierdo.add(pnlTopIzquierda, BorderLayout.NORTH);
-        pnlIzquierdo.add(pnlBotIzquierda, BorderLayout.CENTER);
+        JPanel izquierdo = new JPanel(new BorderLayout(5, 15));
+        izquierdo.setPreferredSize(new Dimension(300, 0));
+        izquierdo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        izquierdo.add(arriba, BorderLayout.NORTH);
+        izquierdo.add(abajo, BorderLayout.CENTER);
+        return izquierdo;
+    }
 
-        JPanel pnlDetalles = new JPanel(new BorderLayout(20, 10));
-        pnlDetalles.setBorder(BorderFactory.createTitledBorder("Resumen de la Cuenta"));
-
-        JPanel pnlInfoBase = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel lblTextoCantidad = new JLabel("Total de artículos: ");
-        lblDetalleId = new JLabel("0");
-        lblDetalleId.setFont(new Font("SansSerif", Font.BOLD, 16));
-
-        pnlInfoBase.add(lblTextoCantidad);
-        pnlInfoBase.add(lblDetalleId);
-        JPanel pnlTotal = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JLabel lblTextoTotal = new JLabel("Total a cobrar: ");
-        lblDetalleTotal = new JLabel("$0.00");
-        lblDetalleTotal.setFont(new Font("SansSerif", Font.BOLD, 28));
-        lblDetalleTotal.setForeground(new Color(41, 128, 185));
-
-        pnlTotal.add(lblTextoTotal);
-        pnlTotal.add(lblDetalleTotal);
-
-        pnlDetalles.add(pnlInfoBase, BorderLayout.WEST);
-        pnlDetalles.add(pnlTotal, BorderLayout.EAST);
-
-        JPanel pnlCentral = new JPanel(new BorderLayout(10, 10));
-        pnlCentral.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pnlCentral.add(pnlDetalles, BorderLayout.SOUTH);
-
-        modeloTabla = new DefaultTableModel(new String[] { "ID", "Producto", "Composicion", "Total" }, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        tablaPedidos = new JTable(modeloTabla);
+    private JPanel crearPanelCentral() {
         tablaPedidos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        JScrollPane scrollTabla = new JScrollPane(tablaPedidos);
-        scrollTabla.setBorder(BorderFactory.createTitledBorder("Ordenes en curso - Barra Principal"));
-
-        pnlCentral.add(scrollTabla, BorderLayout.CENTER);
         tablaPedidos.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 actualizarPanelDetalles();
             }
         });
+        JScrollPane scroll = new JScrollPane(tablaPedidos);
+        scroll.setBorder(BorderFactory.createTitledBorder("Ordenes en curso - Barra Principal"));
 
-        add(pnlIzquierdo, BorderLayout.WEST);
-        add(pnlCentral, BorderLayout.CENTER);
-        btnCafe.addActionListener(e -> agregarPedidoDirecto(TipoProducto.CAFE, "CAFE"));
-        btnEnsalada.addActionListener(e -> agregarPedidoDirecto(TipoProducto.ENSALADA, "ENSALADA"));
-        btnPizza.addActionListener(e -> agregarPedidoDirecto(TipoProducto.PIZZA, "PIZZA"));
+        lblCantidad.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblTotal.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblTotal.setForeground(new Color(41, 128, 185));
 
-        btnDuplicar.addActionListener(e -> {
-            int filaSel = tablaPedidos.getSelectedRow();
+        JPanel pnlCantidad = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        pnlCantidad.add(new JLabel("Total de artículos: "));
+        pnlCantidad.add(lblCantidad);
 
-            if (filaSel == -1) {
-                JOptionPane.showMessageDialog(this, "Seleccione un pedido de la tabla para duplicarlo.", "Aviso",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+        JPanel pnlTotal = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pnlTotal.add(new JLabel("Total a cobrar: "));
+        pnlTotal.add(lblTotal);
 
-            TipoProducto tipo = (TipoProducto) modeloTabla.getValueAt(filaSel, 1);
-            agregarPedidoDirecto(tipo, tipo.name());
-        });
+        JPanel detalles = new JPanel(new BorderLayout(20, 10));
+        detalles.setBorder(BorderFactory.createTitledBorder("Resumen de la Cuenta"));
+        detalles.add(pnlCantidad, BorderLayout.WEST);
+        detalles.add(pnlTotal, BorderLayout.EAST);
 
-        btnReiniciar.addActionListener(e -> {
-            servicio.reiniciarPedidos();
-            pedidosActivos.clear();
-            modeloTabla.setRowCount(0);
-        });
-
+        JPanel central = new JPanel(new BorderLayout(10, 10));
+        central.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        central.add(scroll, BorderLayout.CENTER);
+        central.add(detalles, BorderLayout.SOUTH);
+        return central;
     }
 
-    private JButton crearBoton(String nombre, String precio, String rutaIcono) {
-        JButton btn = new JButton();
-        btn.setLayout(new BorderLayout());
-        btn.setPreferredSize(new Dimension(110, 100));
-
-        JLabel lblNombre = new JLabel(nombre, SwingConstants.CENTER);
-        try {
-            ImageIcon iconoOriginal = new ImageIcon(rutaIcono);
-            java.awt.Image imgEscalada = iconoOriginal.getImage().getScaledInstance(45, 45,
-                    java.awt.Image.SCALE_SMOOTH);
-            lblNombre.setIcon(new ImageIcon(imgEscalada));
-        } catch (Exception ex) {
-            System.err.println("No se pudo cargar la imagen: " + rutaIcono);
-        }
-        lblNombre.setVerticalTextPosition(SwingConstants.BOTTOM);
-        lblNombre.setHorizontalTextPosition(SwingConstants.CENTER);
-
-        JLabel lblPrecio = new JLabel(precio, SwingConstants.CENTER);
-
-        btn.add(lblNombre, BorderLayout.CENTER);
-        btn.add(lblPrecio, BorderLayout.SOUTH);
-
-        return btn;
-
-    }
-
-    private JPanel crearPanelIngredientes(String[] nombres, String[] precios) {
+    private JPanel crearPanelIngredientes(String[][] ingredientes) {
         JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
-        for (int i = 0; i < nombres.length; i++) {
-            String nombreIngrediente = nombres[i];
-
-            JButton btn = new JButton();
-            btn.setLayout(new BorderLayout());
-            btn.add(new JLabel(nombreIngrediente, SwingConstants.CENTER), BorderLayout.CENTER);
-            btn.add(new JLabel(precios[i], SwingConstants.CENTER), BorderLayout.SOUTH);
-
-            btn.addActionListener(e -> procesarIngrediente(nombreIngrediente));
-
+        for (String[] ing : ingredientes) {
+            JButton btn = crearBoton(ing[0], ing[1], null);
             btn.setPreferredSize(new Dimension(100, 50));
-
+            btn.addActionListener(e -> procesarIngrediente(ing[0]));
             panel.add(btn);
         }
         JPanel contenedor = new JPanel(new BorderLayout());
         contenedor.add(panel, BorderLayout.NORTH);
         return contenedor;
-
     }
 
-    private void agregarPedidoDirecto(TipoProducto tipo, String nombreCarta) {
-        cardLayout.show(pnlMostrarIngredientes, nombreCarta);
-        String nuevoId = String.format("P-%03d", contadorPedidos++);
-        Pedido nuevo = registro.clonar(tipo, nuevoId);
-
-        if (nuevo != null) {
-            pedidosActivos.put(nuevo.idProducto(), nuevo);
-            modeloTabla.addRow(new Object[] {
-                    nuevo.idProducto(), tipo, nuevo.descripcion(), String.format("$%.2f", nuevo.precio())
-            });
-
-            int ultimaFila = modeloTabla.getRowCount() - 1;
-            tablaPedidos.setRowSelectionInterval(ultimaFila, ultimaFila);
+    private JButton crearBoton(String nombre, String precio, String rutaIcono) {
+        JLabel lblNombre = new JLabel(nombre, SwingConstants.CENTER);
+        if (rutaIcono != null) {
+            Image img = new ImageIcon(rutaIcono).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+            lblNombre.setIcon(new ImageIcon(img));
+            lblNombre.setVerticalTextPosition(SwingConstants.BOTTOM);
+            lblNombre.setHorizontalTextPosition(SwingConstants.CENTER);
         }
+
+        JButton btn = new JButton();
+        btn.setLayout(new BorderLayout());
+        btn.add(lblNombre, BorderLayout.CENTER);
+        btn.add(new JLabel(precio, SwingConstants.CENTER), BorderLayout.SOUTH);
+        return btn;
     }
 
-    private void procesarIngrediente(String nombreIngrediente) {
-        int filaSel = tablaPedidos.getSelectedRow();
+    private void agregarPedido(TipoProducto tipo) {
+        cardLayout.show(pnlIngredientes, tipo.name());
 
-        if (filaSel == -1) {
+        Pedido nuevo = registro.clonar(tipo, String.format("P-%03d", contadorPedidos++));
+        if (nuevo == null) {
+            return;
+        }
+        pedidosActivos.put(nuevo.idProducto(), nuevo);
+        modeloTabla.addRow(new Object[] {
+                nuevo.idProducto(), tipo, nuevo.descripcion(), String.format("$%.2f", nuevo.precio())
+        });
+        int ultima = modeloTabla.getRowCount() - 1;
+        tablaPedidos.setRowSelectionInterval(ultima, ultima);
+    }
+
+    private void duplicarSeleccionado() {
+        int fila = tablaPedidos.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un pedido de la tabla para duplicarlo.", "Aviso",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        agregarPedido((TipoProducto) modeloTabla.getValueAt(fila, 1));
+    }
+
+    private void procesarIngrediente(String ingrediente) {
+        int fila = tablaPedidos.getSelectedRow();
+        if (fila == -1) {
             JOptionPane.showMessageDialog(this, "Error: No hay pedido seleccionado en la tabla.", "Validación",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        String idPedido = (String) modeloTabla.getValueAt(filaSel, 0);
-        Pedido pedidoActual = pedidosActivos.get(idPedido);
-
+        String id = (String) modeloTabla.getValueAt(fila, 0);
         try {
-            Pedido pedidoDecorado = servicio.personalizarPedido(pedidoActual, nombreIngrediente);
-
-            pedidosActivos.put(idPedido, pedidoDecorado);
-            modeloTabla.setValueAt(pedidoDecorado.descripcion(), filaSel, 2);
-            modeloTabla.setValueAt(String.format("$%.2f", pedidoDecorado.precio()), filaSel, 3);
+            Pedido decorado = servicio.personalizarPedido(pedidosActivos.get(id), ingrediente);
+            pedidosActivos.put(id, decorado);
+            modeloTabla.setValueAt(decorado.descripcion(), fila, 2);
+            modeloTabla.setValueAt(String.format("$%.2f", decorado.precio()), fila, 3);
             actualizarPanelDetalles();
-
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Incompatible", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void actualizarPanelDetalles() {
-        double granTotal = 0.0;
-        for (Pedido p : pedidosActivos.values()) {
-            granTotal += p.precio().doubleValue();
-        }
-        lblDetalleTotal.setText(String.format("$%.2f", granTotal));
-        int cantidadItems = modeloTabla.getRowCount();
-        lblDetalleId.setText(String.valueOf(cantidadItems));
+        double total = pedidosActivos.values().stream().mapToDouble(p -> p.precio().doubleValue()).sum();
+        lblTotal.setText(String.format("$%.2f", total));
+        lblCantidad.setText(String.valueOf(modeloTabla.getRowCount()));
     }
 
     public static void main(String[] args) {
@@ -262,5 +219,4 @@ public class VentanaPedidos extends JFrame {
         }
         SwingUtilities.invokeLater(() -> new VentanaPedidos().setVisible(true));
     }
-
 }
